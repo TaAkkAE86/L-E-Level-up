@@ -132,25 +132,34 @@ document.addEventListener('DOMContentLoaded', () => {
         submitQuizBtn.classList.remove('hidden');
     }
 
-    function renderQuiz(quizData) {
-        quizForm.innerHTML = '';
-        quizData.forEach((q, index) => {
-            const questionDiv = document.createElement('div');
-            questionDiv.className = 'quiz-question';
-            
-            let questionHTML = `<p>${index + 1}. ${q.question}</p>`;
-            if (q.type === 'multiple-choice') {
-                q.options.forEach(opt => {
-                    questionHTML += `<label><input type="radio" name="q${index}" value="${opt}" required> ${opt}</label>`;
-                });
-            } else if (q.type === 'fill-in-the-blank') {
-                questionHTML += `<input type="text" name="q${index}" autocomplete="off" required>`;
-            }
-            
-            questionDiv.innerHTML = questionHTML;
-            quizForm.appendChild(questionDiv);
-        });
-    }
+    // js/main.js -> ฟังก์ชัน renderQuiz (ฉบับแก้ไข)
+
+function renderQuiz(quizData) {
+    quizForm.innerHTML = ''; // ล้างคำถามเก่าออก
+    quizData.forEach((q, index) => {
+        const questionDiv = document.createElement('div');
+        questionDiv.className = 'quiz-question';
+        
+        let questionHTML = `<p>${index + 1}. ${q.question}</p>`;
+        if (q.type === 'multiple-choice') {
+            q.options.forEach(opt => {
+                questionHTML += `<label><input type="radio" name="q${index}" value="${opt}" required> ${opt}</label>`;
+            });
+        } else if (q.type === 'fill-in-the-blank') {
+            questionHTML += `<input type="text" name="q${index}" autocomplete="off" required>`;
+        }
+        
+        questionDiv.innerHTML = questionHTML;
+        quizForm.appendChild(questionDiv);
+    });
+
+    // --- ✅ [เพิ่มส่วนนี้เข้ามา] สร้างปุ่มส่งคำตอบกลับเข้ามาในฟอร์ม ---
+    const submitButton = document.createElement('button');
+    submitButton.type = 'submit';
+    submitButton.id = 'submit-quiz-btn';
+    submitButton.textContent = 'Submit Answers';
+    quizForm.appendChild(submitButton);
+}
 
     function handleSubmitQuiz(event) {
         event.preventDefault();
