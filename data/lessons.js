@@ -732,4 +732,4 @@ const lessonsData = [
         ]
     }
 ];
-];
+
