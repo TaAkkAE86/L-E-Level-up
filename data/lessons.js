@@ -502,7 +502,7 @@ const lessonsData = [
         ],
         quiz: [
             { question: "A large building where goods are stored is a ___.", type: "fill-in-the-blank", answer: "Warehouse" },
-            { word: "The goods a business has in stock is its ___.", type: "fill-in-the-blank", answer: "Inventory" }
+            { question: "The goods a business has in stock is its ___.", type: "fill-in-the-blank", answer: "Inventory" }
         ]
     },
     {
@@ -728,7 +728,7 @@ const lessonsData = [
         ],
         quiz: [
             { question: "Your professional image or character is your ___.", type: "fill-in-the-blank", answer: "Persona" },
-            { word: "The quality of being trusted and believed in is ___.", type: "fill-in-the-blank", answer: "Credibility" }
+            { question: "The quality of being trusted and believed in is ___.", type: "fill-in-the-blank", answer: "Credibility" }
         ]
     }
 ];
