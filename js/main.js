@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let currentLessonIndex = -1;
 
-    // --- DOM ELEMENTS ---
+    // --- DOM ELEMENTS (เหมือนเดิม) ---
     const userLevelEl = document.getElementById('user-level');
     const userPointsEl = document.getElementById('user-points');
     const levelsContainer = document.getElementById('levels-container');
@@ -47,13 +47,33 @@ document.addEventListener('DOMContentLoaded', () => {
         userPointsEl.textContent = userProgress.points;
     }
 
+    // --- [ปรับปรุง 1] สร้างฟังก์ชันใหม่สำหรับตรวจสอบเงื่อนไขการล็อก ---
+    // ฟังก์ชันนี้จะตรวจสอบว่าบทเรียนควรถูกล็อกหรือไม่
+    function isLessonLocked(lesson) {
+        if (lesson.level === 1) {
+            return false; // บทเรียนใน Level 1 จะไม่ถูกล็อก
+        }
+
+        // หาบทเรียนทั้งหมดที่อยู่ใน Level ก่อนหน้า
+        const previousLevel = lesson.level - 1;
+        const requiredLessons = lessonsData.filter(l => l.level === previousLevel);
+        
+        // ตรวจสอบว่าบทเรียนที่จำเป็นทั้งหมด (requiredLessons) อยู่ในรายการที่เรียนจบแล้ว (completedLessons) หรือไม่
+        // .every() จะคืนค่า true ก็ต่อเมื่อทุกรายการใน array เป็นจริงทั้งหมด
+        const allPreviousLessonsCompleted = requiredLessons.every(requiredLesson => 
+            userProgress.completedLessons.includes(requiredLesson.id)
+        );
+
+        return !allPreviousLessonsCompleted; // ถ้าเรียนจบหมดแล้ว => ไม่ล็อก (false), ถ้ายังไม่จบ => ล็อก (true)
+    }
+
     function renderLearningPath() {
         levelsContainer.innerHTML = '';
-        let lastUnlockedLessonIndex = findLastUnlockedLessonIndex();
 
         lessonsData.forEach((lesson, index) => {
             const isCompleted = userProgress.completedLessons.includes(lesson.id);
-            const isLocked = index > lastUnlockedLessonIndex;
+            // --- [ปรับปรุง 2] ใช้ฟังก์ชัน isLessonLocked() ใหม่ ---
+            const isLocked = isLessonLocked(lesson);
 
             const lessonCard = document.createElement('div');
             lessonCard.className = 'lesson-card';
@@ -79,6 +99,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
+    // --- [ลบออก] ฟังก์ชันนี้ไม่จำเป็นอีกต่อไป เพราะเรามี isLessonLocked() ที่ดีกว่า ---
+    /*
     function findLastUnlockedLessonIndex() {
         if (userProgress.completedLessons.length === 0) return 0;
         
@@ -87,12 +109,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         return Math.min(lastCompletedIndex + 1, lessonsData.length - 1);
     }
+    */
 
     function showLesson(lessonIndex) {
         currentLessonIndex = lessonIndex;
         const lesson = lessonsData[lessonIndex];
 
-        // Populate lesson content
         lessonTitle.textContent = lesson.title;
         lessonDescription.textContent = lesson.description;
         vocabList.innerHTML = '';
@@ -102,10 +124,8 @@ document.addEventListener('DOMContentLoaded', () => {
             vocabList.appendChild(li);
         });
 
-        // Populate quiz
         renderQuiz(lesson.quiz);
         
-        // Switch views
         learningPathView.classList.add('hidden');
         lessonView.classList.remove('hidden');
         quizResult.classList.add('hidden');
@@ -121,11 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let questionHTML = `<p>${index + 1}. ${q.question}</p>`;
             if (q.type === 'multiple-choice') {
                 q.options.forEach(opt => {
-                    questionHTML += `
-                        <label>
-                            <input type="radio" name="q${index}" value="${opt}" required>
-                            ${opt}
-                        </label>`;
+                    questionHTML += `<label><input type="radio" name="q${index}" value="${opt}" required> ${opt}</label>`;
                 });
             } else if (q.type === 'fill-in-the-blank') {
                 questionHTML += `<input type="text" name="q${index}" autocomplete="off" required>`;
@@ -155,10 +171,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isCorrect && !userProgress.completedLessons.includes(lesson.id)) {
             userProgress.completedLessons.push(lesson.id);
             userProgress.points += 10;
-            // Simple level up logic
-            if (userProgress.completedLessons.length > userProgress.level * 2) {
-                userProgress.level++;
+
+            // --- [ปรับปรุง 3] Logic การเลื่อนระดับใหม่ ---
+            // 1. หาว่าใน Level ของบทเรียนที่เพิ่งผ่าน มีบทเรียนทั้งหมดกี่บท
+            const lessonsInCurrentLevel = lessonsData.filter(l => l.level === lesson.level);
+            // 2. หาว่าบทเรียนที่เรียนจบแล้วใน Level นี้ มีกี่บท
+            const completedInCurrentLevel = lessonsInCurrentLevel.filter(l => userProgress.completedLessons.includes(l.id));
+
+            // 3. ถ้าจำนวนบทเรียนที่จบแล้ว เท่ากับจำนวนบทเรียนทั้งหมดใน Level นี้ แสดงว่าจบ Level!
+            if (completedInCurrentLevel.length === lessonsInCurrentLevel.length) {
+                // เพิ่มระดับของผู้ใช้ แต่ต้องไม่เกินระดับสูงสุดที่มี
+                const maxLevel = Math.max(...lessonsData.map(l => l.level));
+                if (userProgress.level < maxLevel) {
+                    userProgress.level++;
+                    console.log(`Congratulations! You've reached Level ${userProgress.level}!`);
+                }
             }
+
             saveProgress();
             updateHeaderStats();
         }
@@ -175,24 +204,22 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             resultMessage.textContent = 'Not quite right. Try again! 💪';
             quizResult.className = 'incorrect';
-            // Show a "try again" button instead of next lesson
             nextLessonBtn.classList.add('hidden');
-            // We can add a try again button that calls showLesson(currentLessonIndex)
         }
     }
     
     function showLearningPath() {
         learningPathView.classList.remove('hidden');
         lessonView.classList.add('hidden');
-        renderLearningPath(); // Re-render to show updated progress
+        renderLearningPath();
     }
 
-    // --- EVENT LISTENERS ---
+    // --- EVENT LISTENERS (เหมือนเดิม) ---
     quizForm.addEventListener('submit', handleSubmitQuiz);
     backToPathBtn.addEventListener('click', showLearningPath);
     nextLessonBtn.addEventListener('click', showLearningPath);
 
-    // --- INITIALIZATION ---
+    // --- INITIALIZATION (เหมือนเดิม) ---
     function init() {
         loadProgress();
         updateHeaderStats();
