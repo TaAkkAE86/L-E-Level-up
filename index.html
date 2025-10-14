@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English for Work</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <h1>English for Work 🚀</h1>
+        <div id="user-stats">
+            <span>Welcome!</span> |
+            <span>Level: <b id="user-level">1</b></span> |
+            <span>Points: <b id="user-points">0</b></span>
+        </div>
+    </header>
+
+    <main>
+        <section id="learning-path-view">
+            <h2>Learning Path</h2>
+            <div id="levels-container">
+                </div>
+        </section>
+
+        <section id="lesson-view" class="hidden">
+            <button id="back-to-path-btn">&larr; Back to Learning Path</button>
+            <h2 id="lesson-title"></h2>
+            <p id="lesson-description"></p>
+            
+            <div id="lesson-content">
+                <h3>Vocabulary</h3>
+                <ul id="vocab-list"></ul>
+            </div>
+            
+            <div id="quiz-container">
+                <h3>Quiz Time!</h3>
+                <form id="quiz-form"></form>
+                <button id="submit-quiz-btn">Submit Answers</button>
+            </div>
+            
+            <div id="quiz-result" class="hidden">
+                <h3 id="result-message"></h3>
+                <button id="next-lesson-btn" class="hidden">Continue</button>
+            </div>
+        </section>
+    </main>
+
+    <script src="data/lessons.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
