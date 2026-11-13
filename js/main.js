@@ -2,7 +2,15 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     const STORAGE_KEY = 'englishForWorkProgress';
-    const defaultProgress = { level: 1, points: 0, completedLessons: [] };
+    const defaultProgress = {
+        level: 1,
+        points: 0,
+        completedLessons: [],
+        streakDays: 0,
+        lastStudyDate: null,
+        dailyActivityDate: null,
+        dailyLessons: 0
+    };
     let userProgress = { ...defaultProgress };
     let currentLessonIndex = -1;
     let deferredInstallPrompt = null;
@@ -27,6 +35,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const toast = document.getElementById('app-toast');
     const navItems = Array.from(document.querySelectorAll('.nav-item'));
 
+    function localDateKey(date = new Date()) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function dayDifference(fromDate, toDate) {
+        if (!fromDate || !toDate) return null;
+        const from = new Date(`${fromDate}T00:00:00Z`);
+        const to = new Date(`${toDate}T00:00:00Z`);
+        if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) return null;
+        return Math.round((to - from) / 86400000);
+    }
+
     function saveProgress() {
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(userProgress));
@@ -39,21 +62,42 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const savedData = localStorage.getItem(STORAGE_KEY);
             if (!savedData) return;
-
             const parsedData = JSON.parse(savedData);
-            if (parsedData && typeof parsedData === 'object') {
-                userProgress = {
-                    level: Number.isFinite(parsedData.level) ? parsedData.level : defaultProgress.level,
-                    points: Number.isFinite(parsedData.points) ? parsedData.points : defaultProgress.points,
-                    completedLessons: Array.isArray(parsedData.completedLessons)
-                        ? parsedData.completedLessons.filter(id => lessonsData.some(lesson => lesson.id === id))
-                        : []
-                };
+            if (!parsedData || typeof parsedData !== 'object') return;
+
+            userProgress = {
+                level: Number.isFinite(parsedData.level) ? parsedData.level : defaultProgress.level,
+                points: Number.isFinite(parsedData.points) ? parsedData.points : defaultProgress.points,
+                completedLessons: Array.isArray(parsedData.completedLessons)
+                    ? [...new Set(parsedData.completedLessons.filter(id => lessonsData.some(lesson => lesson.id === id)))]
+                    : [],
+                streakDays: Number.isFinite(parsedData.streakDays) ? Math.max(0, parsedData.streakDays) : 0,
+                lastStudyDate: typeof parsedData.lastStudyDate === 'string' ? parsedData.lastStudyDate : null,
+                dailyActivityDate: typeof parsedData.dailyActivityDate === 'string' ? parsedData.dailyActivityDate : null,
+                dailyLessons: Number.isFinite(parsedData.dailyLessons) ? Math.max(0, parsedData.dailyLessons) : 0
+            };
+
+            if (userProgress.lastStudyDate && dayDifference(userProgress.lastStudyDate, localDateKey()) > 1) {
+                userProgress.streakDays = 0;
             }
+            if (userProgress.dailyActivityDate !== localDateKey()) userProgress.dailyLessons = 0;
         } catch (error) {
             userProgress = { ...defaultProgress };
             console.warn('Saved progress could not be loaded.', error);
         }
+    }
+
+    function recordStudyDay() {
+        const today = localDateKey();
+        const gap = dayDifference(userProgress.lastStudyDate, today);
+        if (gap !== 0) userProgress.streakDays = gap === 1 ? userProgress.streakDays + 1 : 1;
+        userProgress.lastStudyDate = today;
+
+        if (userProgress.dailyActivityDate !== today) {
+            userProgress.dailyActivityDate = today;
+            userProgress.dailyLessons = 0;
+        }
+        userProgress.dailyLessons += 1;
     }
 
     function vibrate(pattern) {
@@ -73,10 +117,44 @@ document.addEventListener('DOMContentLoaded', () => {
         return !previousLevelLessons.every(item => userProgress.completedLessons.includes(item.id));
     }
 
+    function renderAchievements() {
+        const earnedLessons = userProgress.completedLessons.length;
+        const achievements = [
+            { icon: '🌱', title: 'ก้าวแรก', detail: 'เรียนจบบทเรียนแรก', earned: earnedLessons >= 1 },
+            { icon: '🔥', title: 'ติดไฟแล้ว', detail: 'ฝึกต่อเนื่องครบ 3 วัน', earned: userProgress.streakDays >= 3 },
+            { icon: '📚', title: 'นักสะสมความรู้', detail: 'เรียนจบ 10 บทเรียน', earned: earnedLessons >= 10 },
+            { icon: '🚀', title: 'เลื่อนระดับ', detail: 'ปลดล็อก Level 2', earned: userProgress.level >= 2 }
+        ];
+        const list = document.getElementById('achievement-list');
+        list.innerHTML = '';
+        achievements.forEach(achievement => {
+            const card = document.createElement('article');
+            card.className = `achievement-card${achievement.earned ? ' earned' : ''}`;
+            const icon = document.createElement('span');
+            icon.className = 'achievement-icon';
+            icon.setAttribute('aria-hidden', 'true');
+            icon.textContent = achievement.icon;
+            const copy = document.createElement('span');
+            copy.className = 'achievement-copy';
+            const title = document.createElement('b');
+            title.textContent = achievement.title;
+            const detail = document.createElement('small');
+            detail.textContent = achievement.detail;
+            copy.append(title, detail);
+            const status = document.createElement('span');
+            status.className = 'achievement-status';
+            status.textContent = achievement.earned ? '✓' : '🔒';
+            card.append(icon, copy, status);
+            list.appendChild(card);
+        });
+    }
+
     function updateProgressUI() {
         const completed = userProgress.completedLessons.length;
         const total = lessonsData.length;
         const percentage = total ? Math.round((completed / total) * 100) : 0;
+        const studiedToday = userProgress.dailyActivityDate === localDateKey() ? userProgress.dailyLessons : 0;
+        const goalDone = studiedToday >= 1;
 
         userLevelEl.textContent = userProgress.level;
         userPointsEl.textContent = userProgress.points;
@@ -91,32 +169,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? 'เริ่มบทเรียนแรกแล้วสะสม XP กันเลย'
                 : `เยี่ยมมาก! เรียนจบแล้ว ${completed} บทเรียน ไปต่อกันเลย`;
         document.getElementById('course-count').textContent = `${total} บท`;
+        document.getElementById('streak-count').textContent = userProgress.streakDays;
+        document.getElementById('daily-goal-caption').textContent = goalDone ? 'ทำเป้าหมายวันนี้สำเร็จแล้ว 🎉' : 'เป้าหมายวันนี้: เรียน 1 บท';
+        document.getElementById('daily-goal-check').textContent = goalDone ? '✓' : '0/1';
+        document.getElementById('daily-goal-ring').setAttribute('aria-valuenow', goalDone ? '1' : '0');
         document.getElementById('profile-points').textContent = userProgress.points;
         document.getElementById('profile-completed').textContent = completed;
         document.getElementById('profile-level').textContent = userProgress.level;
+        document.getElementById('profile-streak').textContent = userProgress.streakDays;
+        document.getElementById('profile-streak-caption').textContent = userProgress.streakDays > 0
+            ? 'รักษาจังหวะการเรียนรู้ของคุณไว้เลย!'
+            : 'เริ่มเรียนวันนี้เพื่อสร้างสถิติแรกของคุณ';
+        renderAchievements();
     }
 
     function renderLearningPath() {
         levelsContainer.innerHTML = '';
         const levels = [...new Set(lessonsData.map(lesson => lesson.level))].sort((a, b) => a - b);
-
         levels.forEach(level => {
-            const levelLessons = lessonsData
-                .map((lesson, index) => ({ lesson, index }))
-                .filter(item => item.lesson.level === level);
+            const levelLessons = lessonsData.map((lesson, index) => ({ lesson, index })).filter(item => item.lesson.level === level);
             const completedCount = levelLessons.filter(({ lesson }) => userProgress.completedLessons.includes(lesson.id)).length;
-
             const group = document.createElement('section');
             group.className = 'level-group';
             const heading = document.createElement('div');
             heading.className = 'level-heading';
-            heading.innerHTML = `
-                <div class="level-title-wrap">
-                    <span class="level-number">${level}</span>
-                    <div><h3>Level ${level}</h3><p>${levelLessons.length} บทเรียน</p></div>
-                </div>
-                <span class="level-progress">${completedCount}/${levelLessons.length} จบแล้ว</span>
-            `;
+            heading.innerHTML = `<div class="level-title-wrap"><span class="level-number">${level}</span><div><h3>Level ${level}</h3><p>${levelLessons.length} บทเรียน</p></div></div><span class="level-progress">${completedCount}/${levelLessons.length} จบแล้ว</span>`;
             const lessonList = document.createElement('div');
             lessonList.className = 'level-lessons';
 
@@ -128,7 +205,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 card.className = `lesson-card ${completed ? 'completed' : locked ? 'locked' : 'unlocked'}`;
                 card.disabled = locked;
                 card.setAttribute('aria-label', `${lesson.title}${locked ? ', ยังไม่ปลดล็อก' : completed ? ', เรียนจบแล้ว' : ', เริ่มบทเรียน'}`);
-
                 const icon = document.createElement('span');
                 icon.className = 'status-icon';
                 icon.setAttribute('aria-hidden', 'true');
@@ -145,11 +221,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 arrow.setAttribute('aria-hidden', 'true');
                 arrow.textContent = locked ? '' : '›';
                 card.append(icon, copy, arrow);
-
                 if (!locked) card.addEventListener('click', () => showLesson(index));
                 lessonList.appendChild(card);
             });
-
             group.append(heading, lessonList);
             levelsContainer.appendChild(group);
         });
@@ -174,7 +248,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const prompt = document.createElement('p');
             prompt.textContent = `${index + 1}. ${question.question}`;
             wrapper.appendChild(prompt);
-
             if (question.type === 'multiple-choice') {
                 question.options.forEach((option, optionIndex) => {
                     const label = document.createElement('label');
@@ -200,7 +273,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             quizForm.appendChild(wrapper);
         });
-
         const submitButton = document.createElement('button');
         submitButton.type = 'submit';
         submitButton.id = 'submit-quiz-btn';
@@ -225,9 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showQuizResult(isCorrect, score, total) {
         quizResult.className = `result-card ${isCorrect ? 'correct' : 'incorrect'}`;
-        resultMessage.textContent = isCorrect
-            ? `ยอดเยี่ยม! ตอบถูก ${score}/${total} ข้อ 🎉`
-            : `ตอบถูก ${score}/${total} ข้อ ลองทบทวนแล้วทำอีกครั้งนะ`;
+        resultMessage.textContent = isCorrect ? `ยอดเยี่ยม! ตอบถูก ${score}/${total} ข้อ 🎉` : `ตอบถูก ${score}/${total} ข้อ ลองทบทวนแล้วทำอีกครั้งนะ`;
         const submitButton = document.getElementById('submit-quiz-btn');
         if (submitButton) submitButton.classList.add('hidden');
         nextLessonBtn.classList.toggle('hidden', !isCorrect);
@@ -237,7 +307,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleSubmitQuiz(event) {
         event.preventDefault();
         if (currentLessonIndex < 0) return;
-
         const lesson = lessonsData[currentLessonIndex];
         const answers = new FormData(quizForm);
         let score = 0;
@@ -249,8 +318,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const isCorrect = score === lesson.quiz.length;
         showQuizResult(isCorrect, score, lesson.quiz.length);
         if (isCorrect && !userProgress.completedLessons.includes(lesson.id)) {
+            const oldStreak = userProgress.streakDays;
             userProgress.completedLessons.push(lesson.id);
             userProgress.points += 10;
+            recordStudyDay();
             const levelLessons = lessonsData.filter(item => item.level === lesson.level);
             if (levelLessons.every(item => userProgress.completedLessons.includes(item.id))) {
                 const maxLevel = Math.max(...lessonsData.map(item => item.level));
@@ -258,6 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             saveProgress();
             updateProgressUI();
+            if (userProgress.streakDays > oldStreak) showToast(`ทำได้ดี! สถิติฝึกต่อเนื่อง ${userProgress.streakDays} วัน 🔥`);
         }
     }
 
@@ -277,19 +349,13 @@ document.addEventListener('DOMContentLoaded', () => {
         let startX = 0;
         let startY = 0;
         let tracking = false;
-
         lessonView.addEventListener('touchstart', event => {
-            const target = event.target;
-            if (target.closest('button, input, label, form')) {
-                tracking = false;
-                return;
-            }
+            if (event.target.closest('button, input, label, form')) { tracking = false; return; }
             const touch = event.changedTouches[0];
             startX = touch.clientX;
             startY = touch.clientY;
             tracking = true;
         }, { passive: true });
-
         lessonView.addEventListener('touchend', event => {
             if (!tracking) return;
             tracking = false;
@@ -297,13 +363,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const deltaX = touch.clientX - startX;
             const deltaY = touch.clientY - startY;
             if (Math.abs(deltaX) < 85 || Math.abs(deltaX) < Math.abs(deltaY) * 1.35) return;
-
             if (deltaX > 0) {
                 showView('learning-path-view');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 return;
             }
-
             const nextIndex = lessonsData.findIndex((lesson, index) => index > currentLessonIndex && !isLessonLocked(lesson));
             if (nextIndex !== -1) showLesson(nextIndex);
             else showToast('ไม่มีบทเรียนถัดไปที่ปลดล็อกแล้ว');
@@ -316,7 +380,6 @@ document.addEventListener('DOMContentLoaded', () => {
             deferredInstallPrompt = event;
             installButton.classList.remove('hidden');
         });
-
         installButton.addEventListener('click', async () => {
             if (!deferredInstallPrompt) return;
             deferredInstallPrompt.prompt();
@@ -324,7 +387,6 @@ document.addEventListener('DOMContentLoaded', () => {
             deferredInstallPrompt = null;
             installButton.classList.add('hidden');
         });
-
         window.addEventListener('appinstalled', () => {
             installButton.classList.add('hidden');
             showToast('ติดตั้งแอปเรียบร้อยแล้ว 🎉');
@@ -350,9 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./service-worker.js').catch(error => {
-                console.warn('Offline support could not be enabled.', error);
-            });
+            navigator.serviceWorker.register('./service-worker.js').catch(error => console.warn('Offline support could not be enabled.', error));
         });
     }
 });

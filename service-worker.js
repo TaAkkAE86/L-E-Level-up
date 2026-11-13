@@ -1,4 +1,4 @@
-const CACHE_NAME = 'english-for-work-v1';
+const CACHE_NAME = 'english-for-work-v2';
 const APP_FILES = [
   './',
   './index.html',
