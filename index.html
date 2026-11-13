@@ -5,7 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#f6f7fb">
     <meta name="description" content="ฝึกภาษาอังกฤษสำหรับการทำงานแบบสั้น ๆ ได้ทุกวัน">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="English for Work">
     <title>English for Work</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="icons/app-icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icons/app-icon.svg">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -17,6 +23,9 @@
                     <p class="eyebrow">YOUR DAILY PRACTICE</p>
                     <h1>English for Work</h1>
                 </div>
+                <button id="install-app-btn" class="install-btn hidden" type="button" aria-label="ติดตั้งแอป">
+                    <span aria-hidden="true">↓</span><span>ติดตั้ง</span>
+                </button>
                 <div class="xp-chip" aria-label="คะแนนสะสม">
                     <span aria-hidden="true">✦</span>
                     <b id="user-points">0</b>
@@ -125,6 +134,7 @@
                 <span class="nav-icon" aria-hidden="true">◉</span><span>ของฉัน</span>
             </button>
         </nav>
+        <div id="app-toast" class="app-toast" role="status" aria-live="polite"></div>
     </div>
 
     <script src="data/lessons.js"></script>

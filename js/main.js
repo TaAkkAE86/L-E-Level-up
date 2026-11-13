@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const defaultProgress = { level: 1, points: 0, completedLessons: [] };
     let userProgress = { ...defaultProgress };
     let currentLessonIndex = -1;
+    let deferredInstallPrompt = null;
+    let toastTimer;
 
     const userLevelEl = document.getElementById('user-level');
     const userPointsEl = document.getElementById('user-points');
@@ -21,6 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const quizResult = document.getElementById('quiz-result');
     const resultMessage = document.getElementById('result-message');
     const nextLessonBtn = document.getElementById('next-lesson-btn');
+    const installButton = document.getElementById('install-app-btn');
+    const toast = document.getElementById('app-toast');
     const navItems = Array.from(document.querySelectorAll('.nav-item'));
 
     function saveProgress() {
@@ -50,6 +54,17 @@ document.addEventListener('DOMContentLoaded', () => {
             userProgress = { ...defaultProgress };
             console.warn('Saved progress could not be loaded.', error);
         }
+    }
+
+    function vibrate(pattern) {
+        if ('vibrate' in navigator) navigator.vibrate(pattern);
+    }
+
+    function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add('visible');
+        window.clearTimeout(toastTimer);
+        toastTimer = window.setTimeout(() => toast.classList.remove('visible'), 2600);
     }
 
     function isLessonLocked(lesson) {
@@ -216,6 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const submitButton = document.getElementById('submit-quiz-btn');
         if (submitButton) submitButton.classList.add('hidden');
         nextLessonBtn.classList.toggle('hidden', !isCorrect);
+        vibrate(isCorrect ? [35, 40, 60] : 80);
     }
 
     function handleSubmitQuiz(event) {
@@ -257,6 +273,69 @@ document.addEventListener('DOMContentLoaded', () => {
         updateProgressUI();
     }
 
+    function handleSwipeNavigation() {
+        let startX = 0;
+        let startY = 0;
+        let tracking = false;
+
+        lessonView.addEventListener('touchstart', event => {
+            const target = event.target;
+            if (target.closest('button, input, label, form')) {
+                tracking = false;
+                return;
+            }
+            const touch = event.changedTouches[0];
+            startX = touch.clientX;
+            startY = touch.clientY;
+            tracking = true;
+        }, { passive: true });
+
+        lessonView.addEventListener('touchend', event => {
+            if (!tracking) return;
+            tracking = false;
+            const touch = event.changedTouches[0];
+            const deltaX = touch.clientX - startX;
+            const deltaY = touch.clientY - startY;
+            if (Math.abs(deltaX) < 85 || Math.abs(deltaX) < Math.abs(deltaY) * 1.35) return;
+
+            if (deltaX > 0) {
+                showView('learning-path-view');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            const nextIndex = lessonsData.findIndex((lesson, index) => index > currentLessonIndex && !isLessonLocked(lesson));
+            if (nextIndex !== -1) showLesson(nextIndex);
+            else showToast('ไม่มีบทเรียนถัดไปที่ปลดล็อกแล้ว');
+        }, { passive: true });
+    }
+
+    function setupInstallPrompt() {
+        window.addEventListener('beforeinstallprompt', event => {
+            event.preventDefault();
+            deferredInstallPrompt = event;
+            installButton.classList.remove('hidden');
+        });
+
+        installButton.addEventListener('click', async () => {
+            if (!deferredInstallPrompt) return;
+            deferredInstallPrompt.prompt();
+            await deferredInstallPrompt.userChoice;
+            deferredInstallPrompt = null;
+            installButton.classList.add('hidden');
+        });
+
+        window.addEventListener('appinstalled', () => {
+            installButton.classList.add('hidden');
+            showToast('ติดตั้งแอปเรียบร้อยแล้ว 🎉');
+        });
+    }
+
+    function setupConnectivityMessages() {
+        window.addEventListener('offline', () => showToast('ออฟไลน์อยู่ — ยังเรียนต่อได้จากข้อมูลที่บันทึกไว้'));
+        window.addEventListener('online', () => showToast('กลับมาออนไลน์แล้ว'));
+    }
+
     quizForm.addEventListener('submit', handleSubmitQuiz);
     backToPathBtn.addEventListener('click', () => showView('learning-path-view'));
     nextLessonBtn.addEventListener('click', () => showView('learning-path-view'));
@@ -265,4 +344,15 @@ document.addEventListener('DOMContentLoaded', () => {
     loadProgress();
     updateProgressUI();
     renderLearningPath();
+    handleSwipeNavigation();
+    setupInstallPrompt();
+    setupConnectivityMessages();
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./service-worker.js').catch(error => {
+                console.warn('Offline support could not be enabled.', error);
+            });
+        });
+    }
 });
