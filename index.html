@@ -2,50 +2,130 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#f6f7fb">
+    <meta name="description" content="ฝึกภาษาอังกฤษสำหรับการทำงานแบบสั้น ๆ ได้ทุกวัน">
     <title>English for Work</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <header>
-        <h1>English for Work 🚀</h1>
-        <div id="user-stats">
-            <span>Welcome!</span> |
-            <span>Level: <b id="user-level">1</b></span> |
-            <span>Points: <b id="user-points">0</b></span>
-        </div>
-    </header>
-
-    <main>
-        <section id="learning-path-view">
-            <h2>Learning Path</h2>
-            <div id="levels-container">
+    <div class="app-shell">
+        <header class="app-header">
+            <div class="header-row">
+                <div class="brand-mark" aria-hidden="true">E<span>W</span></div>
+                <div class="brand-copy">
+                    <p class="eyebrow">YOUR DAILY PRACTICE</p>
+                    <h1>English for Work</h1>
                 </div>
-        </section>
+                <div class="xp-chip" aria-label="คะแนนสะสม">
+                    <span aria-hidden="true">✦</span>
+                    <b id="user-points">0</b>
+                    <small>XP</small>
+                </div>
+            </div>
+        </header>
 
-        <section id="lesson-view" class="hidden">
-            <button id="back-to-path-btn">&larr; Back to Learning Path</button>
-            <h2 id="lesson-title"></h2>
-            <p id="lesson-description"></p>
-            
-            <div id="lesson-content">
-                <h3>Vocabulary</h3>
-                <ul id="vocab-list"></ul>
-            </div>
-            
-            <div id="quiz-container">
-                <h3>Quiz Time!</h3>
-                <form id="quiz-form">
-                    <button type="submit" id="submit-quiz-btn">Submit Answers</button>
-                </form>
-            </div>
-            
-            <div id="quiz-result" class="hidden">
-                <h3 id="result-message"></h3>
-                <button id="next-lesson-btn" class="hidden">Continue</button>
-            </div>
-        </section>
-    </main>
+        <main class="app-main">
+            <section id="learning-path-view" class="screen" aria-labelledby="home-title">
+                <div class="welcome-row">
+                    <div>
+                        <p class="eyebrow">ยินดีต้อนรับกลับมา 👋</p>
+                        <h2 id="home-title">เรียนรู้วันละนิด<br>เก่งขึ้นทุกวัน</h2>
+                    </div>
+                    <div class="level-badge">
+                        <span>LEVEL</span>
+                        <b id="user-level">1</b>
+                    </div>
+                </div>
+
+                <article class="progress-card">
+                    <div class="progress-card-top">
+                        <div>
+                            <p class="eyebrow">ความคืบหน้าของคุณ</p>
+                            <strong><span id="completed-count">0</span> / <span id="total-count">0</span> บทเรียน</strong>
+                        </div>
+                        <span id="progress-percent" class="progress-percent">0%</span>
+                    </div>
+                    <div class="progress-track" role="progressbar" aria-label="ความคืบหน้าการเรียน" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                        <span id="progress-fill"></span>
+                    </div>
+                    <p class="progress-caption" id="progress-caption">เริ่มบทเรียนแรกแล้วสะสม XP กันเลย</p>
+                </article>
+
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">YOUR CURRICULUM</p>
+                        <h2>เส้นทางการเรียน</h2>
+                    </div>
+                    <span class="course-count" id="course-count">0 บท</span>
+                </div>
+                <div id="levels-container" class="levels-container"></div>
+            </section>
+
+            <section id="lesson-view" class="screen hidden" aria-labelledby="lesson-title">
+                <div class="lesson-toolbar">
+                    <button id="back-to-path-btn" class="back-btn" type="button" aria-label="กลับไปเส้นทางการเรียน">‹</button>
+                    <span>บทเรียน</span>
+                    <span class="toolbar-spacer"></span>
+                    <span class="lesson-step" id="lesson-step"></span>
+                </div>
+
+                <div class="lesson-hero">
+                    <span class="lesson-kicker">ENGLISH FOR WORK</span>
+                    <h2 id="lesson-title"></h2>
+                    <p id="lesson-description"></p>
+                </div>
+
+                <article id="lesson-content" class="content-card">
+                    <div class="card-heading">
+                        <span class="heading-icon" aria-hidden="true">Aa</span>
+                        <div><p class="eyebrow">คำศัพท์สำคัญ</p><h3>Vocabulary</h3></div>
+                    </div>
+                    <ul id="vocab-list" class="vocab-list"></ul>
+                </article>
+
+                <article id="quiz-container" class="content-card quiz-card">
+                    <div class="card-heading">
+                        <span class="heading-icon quiz-icon" aria-hidden="true">?</span>
+                        <div><p class="eyebrow">ลองทบทวนกัน</p><h3>Quick quiz</h3></div>
+                    </div>
+                    <form id="quiz-form">
+                        <button type="submit" id="submit-quiz-btn" class="primary-btn">ส่งคำตอบ <span aria-hidden="true">→</span></button>
+                    </form>
+                </article>
+
+                <div id="quiz-result" class="result-card hidden" aria-live="polite">
+                    <span class="result-sparkle" aria-hidden="true">✦</span>
+                    <h3 id="result-message"></h3>
+                    <button id="next-lesson-btn" class="primary-btn hidden" type="button">เรียนต่อ <span aria-hidden="true">→</span></button>
+                </div>
+            </section>
+
+            <section id="profile-view" class="screen hidden" aria-labelledby="profile-title">
+                <div class="profile-hero">
+                    <div class="profile-avatar" aria-hidden="true">E</div>
+                    <p class="eyebrow">YOUR LEARNING PROFILE</p>
+                    <h2 id="profile-title">ความก้าวหน้าของคุณ</h2>
+                    <p>ทุกบทเรียนคืออีกหนึ่งก้าวสู่ความมั่นใจในการทำงาน</p>
+                </div>
+                <div class="profile-stats">
+                    <article class="profile-stat"><span>🏆</span><strong id="profile-points">0</strong><small>คะแนน XP</small></article>
+                    <article class="profile-stat"><span>📚</span><strong id="profile-completed">0</strong><small>บทเรียนที่จบ</small></article>
+                    <article class="profile-stat"><span>🚀</span><strong id="profile-level">1</strong><small>ระดับปัจจุบัน</small></article>
+                </div>
+                <div class="profile-note"><span aria-hidden="true">💡</span><p>เคล็ดลับ: ฝึกวันละหนึ่งบทเรียน เพื่อให้ภาษาอังกฤษกลายเป็นส่วนหนึ่งของวันทำงาน</p></div>
+            </section>
+        </main>
+
+        <nav class="bottom-nav" aria-label="เมนูหลัก">
+            <button type="button" class="nav-item active" data-view="learning-path-view" aria-current="page">
+                <span class="nav-icon" aria-hidden="true">⌂</span><span>เรียน</span>
+            </button>
+            <button type="button" class="nav-item" data-view="profile-view">
+                <span class="nav-icon" aria-hidden="true">◉</span><span>ของฉัน</span>
+            </button>
+        </nav>
+    </div>
 
     <script src="data/lessons.js"></script>
     <script src="js/main.js"></script>
