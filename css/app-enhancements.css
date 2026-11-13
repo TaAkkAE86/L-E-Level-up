@@ -1,0 +1,61 @@
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #11131b;
+    --surface: #1b1e29;
+    --ink: #f0f1f8;
+    --muted: #a0a6b8;
+    --line: #2a2e3b;
+    --brand-soft: #292545;
+    --shadow: 0 12px 32px rgba(0,0,0,.24);
+}
+
+[data-theme="dark"] body,
+[data-theme="dark"] .app-shell { background: var(--page); color: var(--ink); }
+[data-theme="dark"] .app-header,
+[data-theme="dark"] .bottom-nav { background: rgba(25,27,38,.94); border-color: rgba(255,255,255,.07); }
+[data-theme="dark"] .brand-copy h1,
+[data-theme="dark"] .lesson-card,
+[data-theme="dark"] .profile-stat,
+[data-theme="dark"] .back-btn,
+[data-theme="dark"] .content-card { color: var(--ink); }
+[data-theme="dark"] .lesson-card,
+[data-theme="dark"] .content-card,
+[data-theme="dark"] .profile-stat,
+[data-theme="dark"] .back-btn,
+[data-theme="dark"] .quiz-question label,
+[data-theme="dark"] .quiz-question input[type="text"] { background: var(--surface); border-color: var(--line); }
+[data-theme="dark"] .lesson-card.locked,
+[data-theme="dark"] .quiz-question,
+[data-theme="dark"] .vocab-list li,
+[data-theme="dark"] .achievement-card { background: #171923; border-color: var(--line); color: var(--muted); }
+[data-theme="dark"] .lesson-card.completed,
+[data-theme="dark"] .achievement-card.earned { background: #18251f; border-color: #284638; color: var(--ink); }
+[data-theme="dark"] .lesson-card-copy span,
+[data-theme="dark"] .vocab-list li { color: #b7bdcc; }
+[data-theme="dark"] .streak-card,
+[data-theme="dark"] .profile-streak { background: linear-gradient(110deg, #211f1e, #2a241b); border-color: #3b3326; }
+[data-theme="dark"] .daily-goal-ring { background: #1b1e29; border-color: #484033; color: #e0b56d; }
+[data-theme="dark"] .daily-goal-ring[aria-valuenow="1"] { background: #18251f; border-color: #315a46; color: #78d5a9; }
+[data-theme="dark"] .profile-note { background: #2a241b; color: #f0cd8b; }
+[data-theme="dark"] .achievement-card.earned { background: #18251f; }
+[data-theme="dark"] .xp-chip { background: #302719; color: #f0c77b; }
+[data-theme="dark"] .quiz-question input[type="text"] { color: var(--ink); }
+[data-theme="dark"] .theme-toggle { background: #302b20; }
+
+.theme-toggle { width: 35px; height: 35px; flex: 0 0 auto; display: grid; place-items: center; padding: 0; border: 0; border-radius: 12px; background: #f2f1ff; font-size: 1rem; cursor: pointer; }
+.week-card { padding: 15px 15px 13px; margin: 0 0 25px; border: 1px solid var(--line); border-radius: 19px; background: var(--surface); box-shadow: 0 5px 15px rgba(34,41,74,.035); }
+.week-card-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.week-card-heading h3 { margin: 0; font-size: .9rem; }
+.week-summary { color: var(--brand); font-size: .7rem; font-weight: 800; }
+.week-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.week-day { display: grid; justify-items: center; gap: 6px; color: var(--muted); font-size: .62rem; }
+.week-day-dot { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: var(--page); font-size: .65rem; }
+.week-day.active .week-day-dot { border-color: #c9efdc; color: #16835a; background: #eaf9f1; font-weight: 850; }
+.week-day.today .week-day-label { color: var(--brand); font-weight: 850; }
+[data-theme="dark"] .week-day-dot { background: #141721; border-color: var(--line); }
+[data-theme="dark"] .week-day.active .week-day-dot { background: #18251f; border-color: #315a46; color: #78d5a9; }
+.celebration-layer { position: fixed; z-index: 20; inset: 0; overflow: hidden; pointer-events: none; }
+.celebration-layer i { position: absolute; top: -18px; left: var(--x); width: 8px; height: 13px; border-radius: 2px; background: var(--color); opacity: 0; animation: confetti-fall var(--duration) var(--delay) ease-in forwards; }
+@keyframes confetti-fall { 0% { opacity: 1; transform: translate3d(0, -10px, 0) rotate(0); } 100% { opacity: 0; transform: translate3d(18px, 105vh, 0) rotate(var(--rotation)); } }
+@media (max-width: 360px) { .theme-toggle { width: 31px; height: 31px; } .week-day-dot { width: 27px; height: 27px; } }
+@media (prefers-reduced-motion: reduce) { .celebration-layer { display: none; } }

@@ -1,9 +1,11 @@
-const CACHE_NAME = 'english-for-work-v2';
+const CACHE_NAME = 'english-for-work-v3';
 const APP_FILES = [
   './',
   './index.html',
   './css/style.css',
+  './css/app-enhancements.css',
   './js/main.js',
+  './js/app-enhancements.js',
   './data/lessons.js',
   './manifest.webmanifest',
   './icons/app-icon.svg'
